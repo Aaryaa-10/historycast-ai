@@ -6,6 +6,8 @@ import { useState } from "react";
 import FigureCard from "@/components/FigureCard";
 import { figures } from "@/data/figures";
 import { generateDebate } from "@/services/debateService";
+import { askGemini } from "@/lib/ai/gemini";
+
 export default function Home() {
   const [topic, setTopic] = useState("");
 
@@ -13,6 +15,7 @@ export default function Home() {
     useState<string[]>([]);
 
     const [debate, setDebate] = useState("");
+    const [loading, setLoading] = useState(false);
 
   const handleFigureClick = (figureId: string) => {
     if (selectedFigures.includes(figureId)) {
@@ -29,12 +32,24 @@ export default function Home() {
     }
   };
 
-  const transcript = generateDebate(
-  topic,
-  selectedFigures
-);
+  const handleStartDebate = async () => {
+  try {
+    setLoading(true);
 
-setDebate(transcript);
+    const transcript = await generateDebate(
+      topic,
+      selectedFigures
+    );
+
+    setDebate(transcript);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <main className="p-8 max-w-5xl mx-auto">
@@ -72,6 +87,7 @@ setDebate(transcript);
             <FigureCard
               name={figure.name}
               era={figure.era}
+              description={figure.description}
               selected={selectedFigures.includes(
                 figure.id
               )}
@@ -84,8 +100,11 @@ setDebate(transcript);
   onClick={handleStartDebate}
   className="mt-8 bg-black text-white px-6 py-3 rounded-lg"
 >
-  Start Debate
+  {loading ? "Generating..." : "Start Debate"}
 </button>
+
+
+
 
 {debate && (
   <div className="mt-10 border rounded-lg p-6">
