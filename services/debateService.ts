@@ -1,5 +1,16 @@
 import { figures } from "@/data/figures";
-import { buildFigurePrompt } from "./promptBuilder";
+//import { prisma } from "../lib/prisma";
+import { askGemini } from "@/lib/ai/gemini";
+
+import {
+  buildFigurePrompt,
+
+  buildMemoryPrompt,
+  buildSummaryPrompt,
+} from "./promptBuilder";
+
+import { Debate, DebateMessage } from "@/types/debate";
+
 
 export async function generateDebate(
   topic: string,
@@ -9,34 +20,78 @@ export async function generateDebate(
     selectedFigures.includes(figure.id)
   );
 
-  let transcript = `Topic: ${topic}\n\n`;
+ const messages: DebateMessage[] = [];
 
-  transcript += `Moderator:\n`;
-  transcript += `Welcome everyone. Today's topic is "${topic}".\n\n`;
+  messages.push({
+  speaker: "Moderator",
+  content: `Welcome everyone. Today's topic is "${topic}".`,
+  type: "moderator",
+});
 
-  for (const figure of selected) {
-    const prompt = buildFigurePrompt(
-      figure.name,
-      figure.beliefs,
-      figure.speakingStyle,
-      topic
-    );
 
-    const response = await fetch("/api/ai", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-      }),
-    });
+  let debateContext = "";
 
-    const data = await response.json();
 
-    transcript += `${figure.name}:\n`;
-    transcript += `${data.response}\n\n`;
+  for (let i = 0; i < selected.length; i++) {
+    const figure = selected[i];
+
+    let prompt = "";
+
+    if (i === 0) {
+      prompt = buildFigurePrompt(
+        figure.name,
+        figure.beliefs,
+        figure.speakingStyle,
+        topic
+      );
+    } else {
+      prompt = buildMemoryPrompt(
+        figure.name,
+        figure.beliefs,
+        figure.speakingStyle,
+        topic,
+        debateContext
+      );
+    }
+const response = await askGemini(prompt);
+
+messages.push({
+  speaker: figure.name,
+  content: response,
+  type: "figure",
+});
+
+debateContext += ` ${figure.name}:
+${response}`;
+
+  
+
   }
 
-  return transcript;
+  const summaryPrompt = buildSummaryPrompt(
+    topic,
+    debateContext
+  );
+
+  const summaryResponse =
+  await askGemini(summaryPrompt);
+
+messages.push({
+  speaker: "Moderator Summary",
+  content: summaryResponse,
+  type: "moderator",
+});
+  
+//await prisma.debate.create({
+ // data: {
+   // topic,
+   // transcript: JSON.stringify(messages),
+ // },
+
+//});
+return {
+  topic,
+  messages,
+
+} as Debate;
 }
