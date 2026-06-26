@@ -182,9 +182,9 @@ This project provided hands-on experience with:
 
 **Arya Amoriya**
 
-GitHub: https://github.com/yourusername
+GitHub: https://github.com/Aaryaa-10
 
-LinkedIn: https://linkedin.com/in/your-linkedin
+LinkedIn: https://www.linkedin.com/in/arya-amoriya/
 
 ---
 
