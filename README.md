@@ -4,6 +4,10 @@ HistoryCast AI is an AI-powered web application that generates engaging debates 
 
 ---
 
+## Live Demo
+https://historycast-ai.vercel.app/
+
+
 ## Features
 
 * Generate AI-powered debates using Google Gemini
